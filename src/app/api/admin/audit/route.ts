@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { requireSuperAdmin } from '@/lib/routeAuth';
-import { getAuditLogRoot } from '@/lib/paths';
+import { getAuditLogDir } from '@/lib/storagePaths';
 
 interface AuditLogItem {
   timestamp: string;
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
 
     const limitParam = parseInt(req.nextUrl.searchParams.get('limit') || '200', 10);
     const limit = Math.max(1, Math.min(limitParam, 1000));
-    const logPath = path.join(getAuditLogRoot(), 'admin-audit.log');
+    const logPath = path.join(getAuditLogDir(), 'admin-audit.log');
 
     let content = '';
     try {

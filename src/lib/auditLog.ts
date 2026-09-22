@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { mkdir, appendFile } from 'fs/promises';
 import path from 'path';
-import { getAuditLogRoot } from '@/lib/paths';
+import { getAuditLogDir } from '@/lib/storagePaths';
 
 interface AdminAuditEntry {
   adminUserId: string;
@@ -22,7 +22,7 @@ function getClientIp(req: NextRequest): string {
 
 export async function logAdminAction(req: NextRequest, entry: AdminAuditEntry): Promise<void> {
   try {
-    const logDir = getAuditLogRoot();
+    const logDir = getAuditLogDir();
     await mkdir(logDir, { recursive: true });
     const logPath = path.join(logDir, 'admin-audit.log');
 

@@ -5,7 +5,7 @@ import { execSync } from 'child_process';
 import path from 'path';
 import { requireSuperAdmin } from '@/lib/routeAuth';
 import { logAdminAction } from '@/lib/auditLog';
-import { getUploadRoot, getBackupRoot } from '@/lib/paths';
+import { getBackupDir, getUploadDir, uploadUrlToPath } from '@/lib/storagePaths';
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -32,8 +32,8 @@ export async function GET(req: NextRequest) {
     const auth = requireSuperAdmin(req);
     if (!auth.ok) return auth.response;
 
-    const uploadsDir = getUploadRoot();
-    const backupsDir = getBackupRoot();
+    const uploadsDir = getUploadDir();
+    const backupsDir = getBackupDir();
     const dbSize = await getMongoDbSizeBytes();
 
     let uploadsSize = 0;
@@ -110,10 +110,8 @@ export async function POST(req: NextRequest) {
           select: { fileUrl: true },
         });
         for (const msg of oldMessages) {
-          if (msg.fileUrl) {
-            const filePath = path.join(process.cwd(), msg.fileUrl);
-            if (existsSync(filePath)) try { unlinkSync(filePath); } catch {}
-          }
+          const filePath = msg.fileUrl ? uploadUrlToPath(msg.fileUrl) : null;
+          if (filePath && existsSync(filePath)) try { unlinkSync(filePath); } catch {}
         }
 
         const result = await prisma.message.deleteMany({ where: { createdAt: { lt: cutoff } } });
@@ -135,10 +133,8 @@ export async function POST(req: NextRequest) {
           select: { fileUrl: true },
         });
         for (const msg of filesInRoom) {
-          if (msg.fileUrl) {
-            const filePath = path.join(process.cwd(), msg.fileUrl);
-            if (existsSync(filePath)) try { unlinkSync(filePath); } catch {}
-          }
+          const filePath = msg.fileUrl ? uploadUrlToPath(msg.fileUrl) : null;
+          if (filePath && existsSync(filePath)) try { unlinkSync(filePath); } catch {}
         }
 
         const result = await prisma.message.deleteMany({ where: { roomId } });

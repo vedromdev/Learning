@@ -96,6 +96,20 @@ FelFelChat/
 
 ---
 
+## 🚂 استقرار روی Railway (توصیه‌شده)
+
+پروژه آماده‌ی استقرار روی [Railway](https://railway.com) است (Dockerfile + `railway.json` + اسکریپت bootstrap).
+
+۱. یک MongoDB **Replica Set** بسازید (MongoDB Atlas رایگان یا تمپلیت «MongoDB Replica Set» در Railway)
+۲. ریپو را به GitHub push کنید و در Railway «Deploy from GitHub repo» بزنید
+۳. یک Volume با مسیر `/data` به سرویس متصل کنید
+۴. متغیرها را ست کنید: `DATABASE_URL`، `JWT_SECRET`، `BACKUP_SIGNING_KEY`، `DATA_DIR=/data`، `SUPERADMIN_PASSWORD`
+۵. از Settings → Networking یک دامنه بگیرید — سوپرادمین در اولین اجرا خودکار ساخته می‌شود
+
+راهنمای کامل: [docs/RAILWAY.md](docs/RAILWAY.md)
+
+---
+
 ## 🚀 راه‌اندازی سریع (لینوکس)
 
 با یک دستور، همه چیز نصب و راه‌اندازی می‌شود:
@@ -391,6 +405,21 @@ FelFelChat/
 - **Node.js** v20 or later
 - **MongoDB** v8 or later with a **Replica Set** configured
 - **npm**
+
+---
+
+## 🚂 Deploy on Railway (recommended)
+
+The repo ships Railway-ready: `Dockerfile`, `railway.json`, and a boot script that
+syncs the schema and creates the superadmin automatically.
+
+1. Create a MongoDB **replica set** (free MongoDB Atlas cluster, or Railway's "MongoDB Replica Set" template)
+2. Push to GitHub → Railway → **Deploy from GitHub repo**
+3. Attach a **Volume** mounted at `/data`
+4. Set variables: `DATABASE_URL`, `JWT_SECRET`, `BACKUP_SIGNING_KEY`, `DATA_DIR=/data`, `SUPERADMIN_PASSWORD`
+5. Settings → Networking → **Generate Domain** — log in at `/login` with the superadmin
+
+Full walkthrough: [docs/RAILWAY.md](docs/RAILWAY.md)
 
 ---
 

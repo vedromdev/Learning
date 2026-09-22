@@ -7,10 +7,10 @@ import { enforceRateLimit } from '@/lib/rateLimit';
 import { requireAuth } from '@/lib/routeAuth';
 import { captureServerException } from '@/lib/monitoring';
 import { logError } from '@/lib/logger';
-import { getUploadRoot } from '@/lib/paths';
+import { getUploadDir } from '@/lib/storagePaths';
 
 const MAX_SIZE = parseInt(process.env.UPLOAD_MAX_SIZE_MB || '5') * 1024 * 1024;
-const UPLOAD_ROOT = getUploadRoot();
+const UPLOAD_ROOT = getUploadDir();
 const ALLOWED_MIME_TYPES = new Set([
   'image/png',
   'image/jpeg',

@@ -35,8 +35,11 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const dir = getDirection(locale);
 
   useEffect(() => {
+    // Read persisted locale after mount (cannot be done in the initializer
+    // without causing a server/client hydration mismatch).
     const saved = localStorage.getItem('felfel-locale');
     if (saved === 'fa' || saved === 'en') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocaleState(saved);
     }
   }, []);

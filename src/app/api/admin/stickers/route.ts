@@ -5,6 +5,7 @@ import { existsSync, mkdirSync } from 'fs';
 import path from 'path';
 import { requireSuperAdmin } from '@/lib/routeAuth';
 import { logAdminAction } from '@/lib/auditLog';
+import { getUploadSubdir, uploadUrlToPath } from '@/lib/storagePaths';
 
 // GET /api/admin/stickers - Fetch all stickers
 export async function GET(req: NextRequest) {
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create uploads/stickers directory if it doesn't exist
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'stickers');
+    const uploadDir = getUploadSubdir('stickers');
     if (!existsSync(uploadDir)) {
       mkdirSync(uploadDir, { recursive: true });
     }
@@ -118,8 +119,8 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Delete file from disk
-    const filePath = path.join(process.cwd(), 'public', sticker.fileUrl);
-    if (existsSync(filePath)) {
+    const filePath = uploadUrlToPath(sticker.fileUrl);
+    if (filePath && existsSync(filePath)) {
       await unlink(filePath);
     }
 

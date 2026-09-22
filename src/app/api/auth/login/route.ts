@@ -5,6 +5,7 @@ import { signToken } from '@/lib/jwt';
 import { enforceRateLimit } from '@/lib/rateLimit';
 import { logError, logInfo } from '@/lib/logger';
 import { captureServerException } from '@/lib/monitoring';
+import { isSecureOrigin } from '@/lib/appOrigin';
 
 export async function POST(req: NextRequest) {
   try {
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const isHttps = (process.env.APP_ORIGIN || '').startsWith('https');
+    const isHttps = isSecureOrigin(req.nextUrl.origin);
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: isHttps,

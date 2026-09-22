@@ -4,7 +4,7 @@ import { statSync, readdirSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
 import path from 'path';
 import { requireSuperAdmin } from '@/lib/routeAuth';
-import { getUploadRoot } from '@/lib/paths';
+import { getUploadDir } from '@/lib/storagePaths';
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
     const dbSizeCandidate = dbStats.storageSize ?? dbStats.dataSize ?? dbStats.totalSize ?? 0;
     const dbSize = Number(typeof dbSizeCandidate === 'number' ? dbSizeCandidate : 0);
 
-    const uploadsDir = getUploadRoot();
+    const uploadsDir = getUploadDir();
     const uploadsSize = getDirSize(uploadsDir);
 
     let freeSpace = 0;

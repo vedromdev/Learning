@@ -5,6 +5,7 @@ import { existsSync, mkdirSync } from 'fs';
 import path from 'path';
 import { requireSuperAdmin } from '@/lib/routeAuth';
 import { logAdminAction } from '@/lib/auditLog';
+import { getUploadSubdir, uploadUrlToPath } from '@/lib/storagePaths';
 
 // POST /api/rooms/:roomId/profile-photo - Upload room profile photo (superAdmin only)
 export async function POST(
@@ -49,7 +50,7 @@ export async function POST(
     }
 
     // Create uploads/rooms directory if it doesn't exist
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'rooms');
+    const uploadDir = getUploadSubdir('rooms');
     if (!existsSync(uploadDir)) {
       mkdirSync(uploadDir, { recursive: true });
     }
@@ -69,8 +70,8 @@ export async function POST(
 
     // Delete old profile photo if exists
     if (room.profilePhotoUrl) {
-      const oldPhotoPath = path.join(process.cwd(), 'public', room.profilePhotoUrl);
-      if (existsSync(oldPhotoPath)) {
+      const oldPhotoPath = uploadUrlToPath(room.profilePhotoUrl);
+      if (oldPhotoPath && existsSync(oldPhotoPath)) {
         await unlink(oldPhotoPath);
       }
     }
@@ -122,8 +123,8 @@ export async function DELETE(
     }
 
     // Delete file from disk
-    const filePath = path.join(process.cwd(), 'public', room.profilePhotoUrl);
-    if (existsSync(filePath)) {
+    const filePath = uploadUrlToPath(room.profilePhotoUrl);
+    if (filePath && existsSync(filePath)) {
       await unlink(filePath);
     }
 

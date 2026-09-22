@@ -8,13 +8,10 @@ import fs from "fs";
 import path from "path";
 import { PrismaClient } from "@prisma/client";
 import * as Sentry from "@sentry/node";
-import { getUploadRoot } from "./paths.mjs";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "0.0.0.0";
 const port = parseInt(process.env.PORT || "3000", 10);
-
-const UPLOAD_ROOT = getUploadRoot();
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
@@ -66,6 +63,27 @@ process.on("unhandledRejection", (reason) => {
 });
 
 const prisma = new PrismaClient();
+
+// Storage root: explicit UPLOAD_DIR wins, else $DATA_DIR/uploads (Railway
+// volume), else ./uploads (local dev).
+function resolveUploadRoot() {
+  if (process.env.UPLOAD_DIR && process.env.UPLOAD_DIR.trim()) {
+    return path.resolve(process.cwd(), process.env.UPLOAD_DIR.trim());
+  }
+  if (process.env.DATA_DIR && process.env.DATA_DIR.trim()) {
+    return path.resolve(process.cwd(), process.env.DATA_DIR.trim(), "uploads");
+  }
+  return path.resolve(process.cwd(), "uploads");
+}
+const UPLOAD_ROOT = resolveUploadRoot();
+try {
+  fs.mkdirSync(UPLOAD_ROOT, { recursive: true });
+} catch (error) {
+  log("warn", "uploads.mkdir.failed", {
+    dir: UPLOAD_ROOT,
+    error: error instanceof Error ? error.message : String(error),
+  });
+}
 
 function applySecurityHeaders(res) {
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -137,6 +155,7 @@ app.prepare().then(() => {
 
         res.writeHead(200, {
           "Content-Type": contentTypes[ext] || "application/octet-stream",
+          "Cache-Control": "public, max-age=31536000, immutable",
         });
         fs.createReadStream(filePath).pipe(res);
         return;
@@ -451,6 +470,32 @@ app.prepare().then(() => {
   }
 
   server.listen(port, hostname, () => {
-    log("info", "server.started", { url: `http://${hostname}:${port}` });
+    log("info", "server.started", {
+      url: `http://${hostname}:${port}`,
+      uploadRoot: UPLOAD_ROOT,
+      railway: Boolean(process.env.RAILWAY_ENVIRONMENT),
+    });
   });
+
+  // Graceful shutdown (Railway sends SIGTERM on redeploy)
+  let shuttingDown = false;
+  async function shutdown(signal) {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    log("info", "server.shutdown", { signal });
+    const forceExit = setTimeout(() => process.exit(0), 10000);
+    forceExit.unref();
+    try {
+      io.close();
+      await new Promise((resolve) => server.close(() => resolve()));
+      await prisma.$disconnect();
+    } catch (error) {
+      log("warn", "server.shutdown.error", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+    process.exit(0);
+  }
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
 });

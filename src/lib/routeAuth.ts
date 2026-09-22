@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { JwtPayload, verifyToken } from '@/lib/jwt';
 import { enforceRateLimit } from '@/lib/rateLimit';
+import { getAppOrigin } from '@/lib/appOrigin';
 
 type AuthResult =
   | { ok: true; user: JwtPayload }
@@ -11,7 +12,7 @@ const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 function enforceSameOrigin(req: NextRequest): NextResponse | null {
   if (!UNSAFE_METHODS.has(req.method.toUpperCase())) return null;
 
-  const allowedOrigin = process.env.APP_ORIGIN || req.nextUrl.origin;
+  const allowedOrigin = getAppOrigin(req.nextUrl.origin);
   const origin = req.headers.get('origin');
   const referer = req.headers.get('referer');
   const fetchSite = req.headers.get('sec-fetch-site');

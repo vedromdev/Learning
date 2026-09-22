@@ -12,7 +12,7 @@ import {
 } from '@/lib/backupIntegrity';
 import { logError } from '@/lib/logger';
 import { captureServerException } from '@/lib/monitoring';
-import { getBackupRoot } from '@/lib/paths';
+import { getBackupDir } from '@/lib/storagePaths';
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -46,12 +46,12 @@ function runMongoTool(binary: string, args: string[]): void {
   }
 }
 
-const backupDir = getBackupRoot();
-
 export async function GET(req: NextRequest) {
   try {
     const auth = requireSuperAdmin(req);
     if (!auth.ok) return auth.response;
+
+    const backupDir = getBackupDir();
 
     if (!existsSync(backupDir)) {
       return NextResponse.json({ backups: [] });
@@ -92,6 +92,7 @@ export async function POST(req: NextRequest) {
     if (!auth.ok) return auth.response;
 
     const { action, filename, note } = await req.json();
+    const backupDir = getBackupDir();
     const databaseUrl = getDatabaseUrl();
 
     if (!existsSync(backupDir)) {
